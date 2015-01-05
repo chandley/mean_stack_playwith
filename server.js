@@ -12,7 +12,7 @@
 
   // config
 
-  mongoose.connect('mongodb://node:node@mongo.onmodulus.net:27017/uw03mypu');
+  mongoose.connect('mongodb://localhost:27017/');
 
   app.use(express.static(__dirname + '/public'));
   app.use(morgan('dev'));
@@ -20,5 +20,65 @@
   app.use(bodyParser.json());
   app.use(bodyParser.json({ type: 'application?vnd.api+json'}));
   app.use(methodOverride());
+
+  //define model
+  var Todo = mongoose.model('Todo', {
+    text : String
+  });
+
+  // routes
+
+  // api
+  // get all todos
+  app.get('/api/todos', function(req, res) {
+    console.log(Todo)
+    Todo.find(function(err, todos) {
+      if (err) {
+        console.log("error:" + err)
+        res.send(err)
+      } else {
+      res.json(todos);
+    }
+    });
+  })
+
+  app.post('/api/todos', function(req, res) {
+    Todo.create({
+      text : req.body.text,
+      done : false
+    }, function(err,todo) {
+      if(err)
+        res.send(err);
+      Todo.find(function(err, todos) {
+        if(err)
+          res.send(err)
+        res.json(todos);
+      });
+    });
+  });
+
+  app.delete('/api/todos/:todo_id', function(req, res)
+  {
+    Todo.remove({
+      _id : req.params.todo_id    
+    }, function(err, todo) {
+      if (err)
+        res.send(err);
+      Todo.find(function(err, todos) {
+        if(err)
+          res.send(err)
+        res.json(todos);
+      });
+    });
+  });
+
+  // application
+
+  app.get('*', function(req, res) {
+    res.sendfile('./public/index.html');
+  });
+
+  // listen
+
   app.listen(8080);
   console.log("App listening on port 8080")
